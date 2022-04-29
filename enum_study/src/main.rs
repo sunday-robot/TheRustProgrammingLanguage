@@ -1,11 +1,15 @@
+#![allow(unused)]
 fn main() {
-    if false {
+    if true {
         // IPアドレスの例
         let ip_address_kind = IpAddressKind::V4(1, 2, 3, 4);
         let ip_address_kind_2 = IpAddressKind::V6(String::from("::1"));
 
         println!("{:?}", ip_address_kind);
         println!("{:?}", ip_address_kind_2);
+
+        print_ip_address(ip_address_kind);
+        print_ip_address(ip_address_kind_2);
     }
 
     if false {
@@ -17,13 +21,16 @@ fn main() {
         println!("{:?}", quit_cmd);
         println!("{:?}", move_cmd);
         println!("{:?}", move_cmd_2);
-
     }
 
-    if true {
+    if false {
         let m = Command::Write(String::from("hello"));
         m.call();
     }
+}
+
+fn print_ip_address(ip_address: IpAddressKind) {
+    println!("IPアドレス : {:?}", ip_address);
 }
 
 #[derive(Debug)]

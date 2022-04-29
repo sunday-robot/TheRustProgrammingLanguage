@@ -8,8 +8,17 @@ fn main() {
     let mut number: Option<i32> = None;
 
     number = Some(12);
+    print_option(number);
 
-    number += 12;
+    number = None;
+    print_option(number);
+}
 
-    // println!("{:+}", some_number);
+fn print_option(x:Option<i32>) {
+    // Option型の変数から値を取り出すのは、以下のように少し煩雑な記述が必要らしい。
+    if let Some(v) = x {
+        println!("{}", v);
+    } else {
+        println!("<None>");
+    }
 }
