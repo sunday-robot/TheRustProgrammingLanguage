@@ -1,35 +1,63 @@
+#![allow(unused)]
+
+// VecやStringと異なりHashMapはuseしなければならない。
+use std::collections::HashMap;
+
 fn main() {
     study_simple_vec();
     study_string();
 }
 
 fn study_simple_vec() {
+    // イミュータブルなVecの生成
     if false {
+        // イミュータブルなVecの場合は、通常は以下の様にvec!マクロで初期化する
+        // (この手の機能はマクロではなく言語に組み込んで、きちんと機能を定義してほしい。マクロでの実装は「ソース読め」ほしい気がする。)
+        let v = vec![2, 3, 5];
+
+        // イミュータブルなので、値の追加はできない
+        // v.push(1);
+
+        println!("{:?}", v);
+    }
+    // 空のイミュータブルなVecの生成
+    if false {
+        // vec!マクロは空のVec生成には使用できないらしい(型が指定できないから?)
+
         // 以下の記述が標準的らしいが、
         let v: Vec<i32> = Vec::new();
         println!("{:?}", v);
+
         // 以下の記述の方がわかりやすいのではないか?
         // Javaは左辺側で型を記述するなどちょっとおかしいが、C#やkotolinなどは右辺で型を記述するようになっている。
         // 左辺等辺の両方に型を記述するというのは頭がおかしいのではないか?
         let v2 = Vec::<i32>::new();
         println!("{:?}", v2);
     }
+    // ミュータブルなVecの生成、操作
     if false {
         // ベクターに要素を追加や削除する場合は、mutを付ける必要がある。
+        // (なんとなくだが、mutは左辺ではなく右辺に記述する文法の方が分かりやすい気がする…)
         let mut v = Vec::<i32>::new();
         v.push(2);
         v.push(3);
         v.push(5);
+        println!("{:?}", v); // "[2, 3, 5]"が表示される
+
+        // 先頭要素の"2"を削除し、"[3, 5]"にする。
+        v.remove(0);
         println!("{:?}", v);
 
+        // 先頭要素の"3"を削除し、"[5]"にする。
         v.remove(0);
         println!("{:?}", v);
+
+        // 先頭要素の"5"を削除し、"[]"にする。
         v.remove(0);
-        println!("{:?}", v);
-        v.remove(0);
-        println!("{:?}", v);
+        println!("{:?}", v); // "[]"が表示される
+
+        // 既に空ベクタになっているのに、さらに先頭要素を削除しようとするとプログラムが異常終了する。
         if false {
-            // 要素が3つなので、4つ削除しようとするとpanicでプログラムが終了してしまう。
             v.remove(0);
             println!("{:?}", v);
         }
@@ -37,29 +65,43 @@ fn study_simple_vec() {
         v.clear();
         println!("{:?}", v);
     }
+    // やりすぎだと思うレベルの型推論
     if false {
-        // 型推論：
         // 下の行では型を右辺にも左辺にもi32という型を明記していないが、
-        // その後の行でpush()の引数がi32型であるため型が推論できるということらしい。(ここまでやらなくてもよいような…)
+        // その後の行でpush()の引数がi32型であるため型が推論できるということらしい。
+        // (ここまでやるとコードの可読性が悪くなるように思う。)
         let mut v = Vec::new();
         v.push(2);
         v.push(3);
         v.push(5);
         println!("{:?}", v);
     }
-    if false {
-        let v = vec![2, 3, 5];
-        println!("{:?}", v);
-    }
+    // 要素アクセス
     if false {
         let v = vec![1, 2, 3, 4, 5];
 
-        let third: &i32 = &v[2];
-        println!("The third element is {}", third);
+        // []でのアクセス
+        // 記述がシンプルだが、範囲外の添え字を指定すると落ちてしまう。
+        // (範囲外の添え字を絶対に使用しないことが保証されていない限り使えない?
+        // もしそうだとすると、書き捨てプログラムか、絶対に自分以外に使うことがないプログラムでしか使えないということか?)
+        {
+            let third: &i32 = &v[2];
+            println!("The third element is {}", third);
 
-        match v.get(2) {
-            Some(third) => println!("The third element is {}", third),
-            None => println!("There is 3rd element."),
+            if false {
+                // 範囲外をアクセスしようとすると、プログラムが終了してしまう。
+                let sixth: &i32 = &v[5];
+                println!("The sixth element is {}", sixth);
+            }
+        }
+
+        // get()でのアクセス
+        // 範囲外の添え字を指定すると落ちはしないが、記述が非常に煩雑。
+        {
+            match v.get(2) {
+                Some(third) => println!("The third element is {}", third),
+                None => println!("There is 3rd element."),
+            }
         }
 
         // 以下は存在しない6番目の要素にアクセスするので、panicでプログラムが終了してしまう。
@@ -75,9 +117,9 @@ fn study_simple_vec() {
             None => println!("There is no 6th element."),
         }
     }
-    if false {
-        // ベクタとenumを使用したトリッキーな技。
-        // ここで示したやり方は、ベクタの内容がコンパイル時に確定している場合だけに使用できるものらしい。
+    // 複数の異なる方の値を保持できるVec(enumを使用したトリッキーな技)
+    if true {
+        // ここで示したやり方は、ベクタの要素の型がコンパイル時に確定している場合だけに使用できるものらしい。
         // ベクタに複数の型のオブジェクトを入れたい場合は、通常はトレイト(Java、C#のinterfaceに相当する機能)を使うらしい。
         #[derive(Debug)]
         enum SpreadsheetCell {
@@ -91,48 +133,141 @@ fn study_simple_vec() {
             SpreadsheetCell::Text(String::from("blue")),
             SpreadsheetCell::Float(10.12),
         ];
+        println!("{:?}", row);
 
-        println!("[0] : {:?}", row[0]);
-        println!("[1] : {:?}", row[1]);
-        println!("[2] : {:?}", row[2]);
+        let mut row2 = Vec::<SpreadsheetCell>::new();
+        row2.push(SpreadsheetCell::Int(2));
+        row2.push(SpreadsheetCell::Float(3.1));
+        row2.push(SpreadsheetCell::Text(String::from("ABC")));
+
+        println!("{:?}", row2);
     }
 }
 
 fn study_string() {
+    // str型とString型
     if false {
+        // str。イミュータブルな文字列型(文字列定数ということでよい?)
         let data = "initial contents";
 
-        let s = data.to_string();
-        println!("{}", s);
-
-        // the method also works on a literal directly:
-        let s = "initial contents".to_string();
-        println!("{}", s);
-
-        let s = String::from("initial contents");
-        println!("{}", s);
+        // String。イミュータブルあるいはミュータブルな文字列型
+        // (JavaやC#は、String(string)型はイミュータブルなので、RustのStringに対応するのは、JavaならStringBuffer型?(C#は知らない))
+        let s1 = data.to_string();
+        let s2 = "initial contents".to_string();
+        let s3 = String::from("initial contents");
+        println!("{} {} {}", s1, s2, s3);
     }
-    if true {
+    // Stringへの文字列追加(おそらくRustで]"」列連結には"+"等ではなく、format!()を使用するのが通常であると思われる。)
+    if false {
         let mut s1 = String::from("foo");
-        let s2 = "bar";
-        s1.push(' ');   // "push"よりも"append"の方が自然に思う…
-        s1.push_str(s2);    // Rustではオーバーロードができないので、"push"ではなく、"push_str"としなければならない。
-        println!("s1 is {}", s1);
-        println!("s2 is {}", s2);
-    }
-    if true {
 
+        // 文字列の末尾に空白文字を1つ追加する。
+        s1.push(' '); // "push"よりも"append"の方が自然に思うが、C++のvectorに習ったのだろうか?
+        s1.push('c');
+        s1.push('h');
+        s1.push('_');
+        s1.push('c');
+        s1.push('o');
+        s1.push('n');
+        s1.push('s');
+        s1.push('t');
+        s1.push('a');
+        s1.push('n');
+        s1.push('t');
+        println!("s1 is {}", s1);
+
+        // 文字列の末尾に文字列を追加する。Rustでは理由は不明だがオーバーロードができないので、"push"ではなく、"push_str"としなければならない。
+        // 文字列定数の追加
+        s1.push_str(" str_constant");
+        // str型変数の追加
+        let s2 = " str_variable";
+        s1.push_str(s2);
+        // String型変数の追加はできない。(理由はわからないが、追加できるようにするにはpush_string()という関数を追加しなければならないからだろうか?)
+        let s3 = String::from(" string_variable");
+        // s1.push_str(s3);    // str&型でないのでコンパイルエラーになる。
+        s1.push_str(s3.as_str()); // as_str()すればよい。
+        println!("s1 is {}", s1);
+    }
+    // +演算子での文字列連結
+    if false {
+        // 一般的な文字列連結は、Rustでは「format!()」を使うのが定石。
+        // "+"演算子での文字列連結もできるのだが、RustのStringはVec<u8>のラッパーで、
+        // "+"演算子はそもそもVec型のものである。"+"演算子は記述のしやすさよりも実行時効率を追求しているらしく、
+        // 二つのベクタを連結して新しいベクタを返すものではなく、左のベクタの末尾に、右のベクタの要素を追加するものとなっている。
+        // このような仕様であるため、文字列の連結目的としては、左のベクタの所有権が剥奪されるなど記述しにくいものになってしまっている。
+        // この代替措置として"format!()"が用意されたものと思われる。
+
+        let s1 = String::from("abc");
+        let s2 = String::from("def");
+        let s1s2 = format!("{}{}", s1, s2);
+        println!("{}+{}={}", s1, s2, s1s2);
+        // let s3 = s1 + s2.as_str();
+        let s3 = s1 + &s2;
+        // ↑"+"演算子は実行効率重視の仕様であるため、上記の分の結果、s1の所有権は剥奪され、s1は使用できなくなる。
+        println!("={}", s3);
+
+        // println!("s1 : {}", s1);   s1は、s3の初期化で参照されており、この時点でs1からs3に所有権が移ってしまっているのでs3の初期化以降は参照できない。
+        println!("s2 : {}", s2);
+    }
+    // 文字列の長さ
+    if false {
+        // lenでの長さ取得は多くの場合、期待したものではない
+        // Stringもstrもどちらの要素の型はu8で、ユニコードではなく、UTF8である。
+        // このため、ASCII文字しか使用しない場合は非常に簡単であるが、漢字などを使用する場合、非常に面倒くさい。
+
+        // 以下のlenでは、ASCII文字のみからなる文字列であるため、単純に文字数と同じ4を返す。
+        let s1 = String::from("Hola");
+        println!(
+            "ASCII文字のみからなる文字列のバイト数は文字数に一致する：{}.len() = {}",
+            s1,
+            s1.len()
+        );
+
+        // 以下のlenでは、UT8エンコーディングでひらがな1文字が3バイトになるため、6を返す。
+        let s1 = String::from("やあ");
+        println!(
+            "漢字などの場合は文字数*3になる(特殊な漢字は*3ではないかも)：{}.len() = {}",
+            s1,
+            s1.len()
+        );
+        let s1 = String::from("😀😐");
+        println!(
+            "絵文字の場合は文字数*4になるらしい：{}.len() = {}",
+            s1,
+            s1.len()
+        );
+    }
+    // 要素へのアクセス
+    if (true) {
+        // 以下のlenでは、ASCII文字のみからなる文字列であるため、単純に文字数と同じ4を返す。
+        let s1 = String::from("Hola");
+        println!("ASCII文字のみからなる文字列 {} の要素アクセス", s1);
+        for c in s1.chars() {
+            println!("{}", c);
+        }
+
+        // // 以下のlenでは、UT8エンコーディングでひらがな1文字が3バイトになるため、6を返す。
+        let s1 = String::from("やあ");
+        println!("漢字などからなる文字列 {} の要素アクセス", s1);
+        for c in s1.chars() {
+            println!("{}", c);
+        }
+        let s1 = String::from("😀😐");
+        println!("絵文字からなる文字列 {} の要素アクセス", s1);
+        for c in s1.chars() {
+            println!("{}", c);
+        }
     }
 }
 
-// fn print_nth_element(v: Vec<i32>, n: i32) {
-//     match v.get(n) {
-//         //                      "3つ目の要素は{}です"
-//         Some(third) => println!("The third element is {}", third),
-//         //               "3つ目の要素はありません。"
-//         None => println!("There is no third element."),
-//     }
-// }
+fn study_hashmap() {
+    let mut scores = HashMap::new();
+
+    scores.insert(String::from("Blue"), 10);
+    scores.insert(String::from("Yellow"), 50);
+
+    println!("{:?}", scores);
+}
 
 // 要素がi32などではなくオブジェクト(JavaやC#でいうとことのオブジェクト。Rustでどう呼ぶのか不明)のベクタ
 fn study_objects_vec() {}
