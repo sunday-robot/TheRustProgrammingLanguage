@@ -11,3 +11,7 @@
 /crate_study/target
 /crate_study_2/target
 /match_study/target
+/error_study/target
+/generics_study/target
+/lifetime_study/target
+/trait_study/target

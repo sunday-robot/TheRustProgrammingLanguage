@@ -6,6 +6,7 @@ use std::collections::HashMap;
 fn main() {
     study_simple_vec();
     study_string();
+    study_hashmap();
 }
 
 fn study_simple_vec() {
@@ -118,7 +119,7 @@ fn study_simple_vec() {
         }
     }
     // 複数の異なる方の値を保持できるVec(enumを使用したトリッキーな技)
-    if true {
+    if false {
         // ここで示したやり方は、ベクタの要素の型がコンパイル時に確定している場合だけに使用できるものらしい。
         // ベクタに複数の型のオブジェクトを入れたい場合は、通常はトレイト(Java、C#のinterfaceに相当する機能)を使うらしい。
         #[derive(Debug)]
@@ -238,7 +239,7 @@ fn study_string() {
         );
     }
     // 要素へのアクセス
-    if (true) {
+    if false {
         // 以下のlenでは、ASCII文字のみからなる文字列であるため、単純に文字数と同じ4を返す。
         let s1 = String::from("Hola");
         println!("ASCII文字のみからなる文字列 {} の要素アクセス", s1);
@@ -260,13 +261,108 @@ fn study_string() {
     }
 }
 
+// ハッシュマップは、言語本体に組み込みの機能ではなく標準ライブラリの一つでしかないためか、
+// 便利な初期化記法などは提供されておらず、オブジェクト生成と要素の追加を通常のメソッド呼び出しで記述するしかない。
 fn study_hashmap() {
-    let mut scores = HashMap::new();
+    if false {
+        let mut scores = HashMap::new();
 
-    scores.insert(String::from("Blue"), 10);
-    scores.insert(String::from("Yellow"), 50);
+        // ハッシュマップに要素を追加する。
+        {
+            // 以下のようには書けないのか…
+            // 「scores[String::from("Blue")] = 10;」
+            // 「scores["Blue"] = 10;」
+            scores.insert(String::from("Blue"), 10);
+            scores.insert(String::from("Yellow"), 50);
+            println!("ハッシュ表scoresの内容 {:?}", scores);
+        }
 
-    println!("{:?}", scores);
+        // 登録済みの要素を更新する。(新規登録と同じinsert()を使用する。)
+        {
+            scores.insert(String::from("Blue"), 20);
+            println!("ハッシュ表scoresの内容 {:?}", scores);
+        }
+        // 登録されている要素の個数を確認する。
+        println!("要素数は {:?} です。", scores.len());
+        // 要素を列挙する。
+        for e in scores.iter() {
+            println!("key:{:?}, value:{:?}", e.0, e.1);
+        }
+        // キーを列挙する。
+        for e in scores.keys() {
+            println!("key:{:?}, value:{:?}", e, scores.get(e));
+        }
+        // キーが登録済みかどうか調べる。
+        {
+            let blue_value = scores.get(&String::from("Blue"));
+            let red_value = scores.get(&String::from("Red"));
+            println!("Blue's value = {:?}", blue_value);
+            println!("Red's value = {:?}", red_value);
+        }
+        // キーが登録済みなら何もしない未登録なら登録する。
+        {
+            // 以下のような面倒な記述が必要。
+            scores.entry(String::from("Blue")).or_insert(123); // Blueは登録済みなので何もしない。
+            scores.entry(String::from("Red")).or_insert(234); // Redは未登録なので登録される。
+            println!("ハッシュ表scoresの内容 {:?}", scores);
+
+            // entry()、or_insert()が理解的なかったので調査用のコードを書いてみた。
+            {
+                // Blueは登録済みなので、OccupiedEntryが返る。
+                // OccupiedEntryのor_insert()は何もしないメソッドであるため、entry().or_insert()で、「登録済みなら何もしない」ということが行われる。
+                let blue_entry = scores.entry(String::from("Blue"));
+                println!("Blue's entry = {:?}", blue_entry);
+                // 上の2文をブロックとしているのはソースコードをわかりやすくするためではなく、blue_entryの所有権を放棄するため。
+                // ひとつめの文を実行すると、scoresの指すオブジェクトの所有権がblue_entryに移ってしまい、scoresが使えなくなってしまう。
+            }
+            {
+                // Greenは未登録なので、VacantEntryが返る。
+                // VacantEntryのor_insert()はinsert()を行うメソッドであるため、entry().or_insert()で、「未登録なら登録する。」ということが行われる。
+                let green_entry = scores.entry(String::from("Green"));
+                println!("Green's entry = {:?}", green_entry);
+            }
+        }
+    }
+    // 現在の値に基づいて更新する。
+    {
+        let text = "hello world wonderful world";
+        let word_iterator = text.split_whitespace();
+
+        let mut map = HashMap::new();
+
+        for word in word_iterator {
+            let count_reference: &mut i32;
+            {
+                // entry()は、要素が既にあればその参照を返し、なければ挿入されるべき仮想的な要素の参照を返す。
+                let e = map.entry(word);
+                // or_insert()は、thisが実体を持つ要素の参照であればその値の参照を返す。
+                // 実体を持たない仮想的な要素の参照の場合は、引数で渡された値を持つ実態生成し、マップに追加した後、その要素の値の参照を返す。
+                // ↑Rustは「ゼロコスト抽象化」なので、値0でマップに追加した後に、値を+1するなどというコードは生成せず、はなから値1でマップに追加するというコードを生成するはず。
+                count_reference = e.or_insert(0);
+            }
+            *count_reference += 1;
+        }
+
+        println!("{:?}", map);
+    }
+    if false {
+        let mut scores = HashMap::new();
+        let key1 = String::from("Red");
+        let val1 = 30;
+        scores.insert(key1, val1);
+
+        // println!("key1 : {}", key1);   // key1はCopyトレイトを実装していないString型であるため、scoreに所有権が移っているので、もうkey1は無効。
+        println!("val1 : {}", val1); // val1はCopyトレイトを実装している(?)i32型であるため、scoreはval1のコピーを所有しているだけなので、val1には引き続き有効。
+
+        // mut文字列でも、所有権が移るのは変わらない。
+        let mut key2 = String::from("Green");
+        let mut val2 = 50;
+        scores.insert(key2, val2);
+        // println!("key2 : {}", key2); // key2はCopyトレイトを実装していないString型であるため、scoreに所有権が移っているので、もうkey2は無効。
+        println!("val2 : {}", val2);
+
+        println!("scores : {:?}", scores);
+    }
 }
 
 // 要素がi32などではなくオブジェクト(JavaやC#でいうとことのオブジェクト。Rustでどう呼ぶのか不明)のベクタ
