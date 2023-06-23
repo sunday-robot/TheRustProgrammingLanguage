@@ -1,4 +1,4 @@
-//use trait_study::summary::Summary;
+use crate::summary_trait::SummaryTrait;
 
 #[derive(Debug)]
 pub struct Tweet {
@@ -8,7 +8,7 @@ pub struct Tweet {
     pub retweet: bool,
 }
 
-impl trait_study::summary::Summary for Tweet {
+impl SummaryTrait for Tweet {
     fn summarize(&self, max_length:i32) -> String {
         format!(
             "USER NAME:[{}], CONTENT:[{}], [{}]",
@@ -16,9 +16,6 @@ impl trait_study::summary::Summary for Tweet {
             self.content,
             Tweet::summarize_util(max_length)
         )
-    }
-    fn summarize2(self) -> String {
-        format!("{}", self.username)
     }
     fn summarize_util(x: i32) -> String {
         format!("{}", x)

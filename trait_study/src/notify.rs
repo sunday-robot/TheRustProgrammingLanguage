@@ -1,5 +1,5 @@
-use crate::summary::Summary;
+use crate::summary_trait::SummaryTrait;
 
-pub fn notify(item: &impl Summary) {
+pub fn notify(item: &impl SummaryTrait) {
     println!("Breaking news! {}", item.summarize(100));
 }
